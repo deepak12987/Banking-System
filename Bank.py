@@ -9,6 +9,8 @@ import pymysql
 root = Tk()
 UserID = StringVar()
 Password = StringVar()
+transferID = StringVar()
+amount = StringVar()
 
 
 def main():
@@ -87,25 +89,47 @@ def transacWin():
     except Exception as e:
         print(e)
 
-def sendMoney(idt,amo,dt):
+def sendMoney(dt):
     global UserID
-    query = "insert into Transactions value('{}','{}','{}','{}')".format(UserID,idt,amo,dt)
+    global transferID
+    global amount
+    uid = UserID.get()
+    idt = transferID.get()
+    amo = amount.get()
+    val1 = 0
+    val2 = 0
+    query = "insert into Transactions value('{}','{}','{}','{}')".format(uid,idt,amo,dt)
     try:
         conn = pymysql.connect(host="localhost",user="root",passwd="deepak@123",database="bank")
         with conn:
             with conn.cursor() as cur:
                 cur.execute(query)
+                query1 = "Select balance from accounts where userid = '{}'".format(uid)
+                query2 = "Select balance from accounts where userid = '{}'".format(idt)
+                cur.execute(query1)
+                ans1 = cur.fetchone()
+                cur.execute(query2)
+                ans2 = cur.fetchone()
+                val1  = int(ans1[0])-int(amo)
+                val2 = int(ans2[0])+int(amo)
+
+                query3 = "update accounts set balance = '{}' where userid = '{}'".format(str(val1),uid)
+                query4 = "update accounts set balance = '{}' where userid = '{}'".format(str(val2),idt)
+                cur.execute(query3)
+                cur.execute(query4)
 
     except Exception as e:
         print(e)
 
+    
 def moneyWin():
     global root
+    global transferID
+    global amount
     root.configure(bg = "purple")
     root.geometry('1350x750+0+0')
     root.title("MONEY TRANSFER")
-    transferID = StringVar()
-    amount = StringVar()
+
     now = datetime.datetime.now()
     date = now.strftime("%Y/%m/%d %H:%M:%S")
     titleLabel = Label(root,text = "MONEY TRANSFER",font = ('arial',30,'bold'),bd = 20,bg = "purple")
@@ -128,7 +152,7 @@ def moneyWin():
     txtAmount = Label(framepr,font = ('arial',25,'bold'),text = date,bd = 15,bg="grey")
     txtAmount.place(x= 400,y=200)
    
-    btntransfer = Button(root,text = "TRANSFER",font = ('arial',15,'bold'),width = 20,bg = "grey",command = lambda:sendMoney(transferID,amount,date))
+    btntransfer = Button(root,text = "TRANSFER",font = ('arial',15,'bold'),width = 20,bg = "grey",command = lambda:sendMoney(date))
     btntransfer.place(x = 900,y = 500)
 
     btnback = Button(root,text="BACK",font = ('arial',15,'bold'),width = 20,bg = "grey",command = lambda:backbtn())
